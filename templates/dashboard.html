@@ -1,0 +1,471 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard - Fire Response System{% endblock %}
+
+{% block head %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1>
+            <i data-feather="bar-chart-2" class="me-2"></i>
+            Analytics Dashboard
+        </h1>
+        <p class="lead">System performance metrics and historical data analysis</p>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Alert Activity (Last 30 Days)</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="alertsChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Alert Distribution</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="severityChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sensor Performance -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i data-feather="cpu" class="me-2"></i>
+                    Sensor Performance
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for sensor in sensors %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card border-secondary">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ sensor.name }}</h6>
+                                <div class="mb-2">
+                                    <small class="text-muted">Type: {{ sensor.sensor_type.value.title() }}</small>
+                                </div>
+                                
+                                <!-- Mini chart for sensor readings -->
+                                <canvas id="sensor-chart-{{ sensor.id }}" height="60"></canvas>
+                                
+                                <div class="mt-2">
+                                    <div class="d-flex justify-content-between">
+                                        <small>Current:</small>
+                                        <strong class="text-{{ 'danger' if sensor.last_reading and sensor.last_reading > sensor.threshold_value else 'success' }}">
+                                            {{ sensor.last_reading or 'N/A' }}
+                                        </strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <small>Threshold:</small>
+                                        <span>{{ sensor.threshold_value }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <small>Status:</small>
+                                        <span class="badge bg-secondary" id="sensor-status-{{ sensor.id }}">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Emergency Contacts -->
+<div class="row mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i data-feather="users" class="me-2"></i>
+                    Emergency Contacts
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if contacts %}
+                    <div class="list-group list-group-flush">
+                        {% for contact in contacts %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ contact.name }}</h6>
+                                <small class="text-muted">{{ contact.role.title() }}</small>
+                                <br>
+                                <small>
+                                    {% if contact.phone %}
+                                        <i data-feather="phone" width="12" height="12"></i> {{ contact.phone }}
+                                    {% endif %}
+                                    {% if contact.email %}
+                                        <i data-feather="mail" width="12" height="12"></i> {{ contact.email }}
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <span class="badge bg-{{ 'success' if contact.is_active else 'secondary' }}">
+                                {{ 'Active' if contact.is_active else 'Inactive' }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i data-feather="users" width="48" height="48" class="text-muted mb-3"></i>
+                        <h5>No Emergency Contacts</h5>
+                        <p class="text-muted">Add emergency contacts to receive notifications.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- System Metrics -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i data-feather="activity" class="me-2"></i>
+                    System Metrics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="text-center p-3 border rounded">
+                            <div class="fs-3 text-primary">{{ alerts|length }}</div>
+                            <small class="text-muted">Total Alerts (30d)</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3 border rounded">
+                            <div class="fs-3 text-success">{{ sensors|length }}</div>
+                            <small class="text-muted">Active Sensors</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3 border rounded">
+                            <div class="fs-3 text-info" id="avg-response-time">--</div>
+                            <small class="text-muted">Avg Response Time</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3 border rounded">
+                            <div class="fs-3 text-warning" id="uptime">99.9%</div>
+                            <small class="text-muted">System Uptime</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" onclick="exportData()">
+                        <i data-feather="download" class="me-2"></i>
+                        Export Data
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="generateReport()">
+                        <i data-feather="file-text" class="me-2"></i>
+                        Generate Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Chart data preparation
+    const alerts = {{ alerts | tojsonfilter | safe }};
+    const sensors = {{ sensors | tojsonfilter | safe }};
+    
+    // Process alert data for charts
+    function processAlertData() {
+        const now = new Date();
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        
+        // Create daily buckets
+        const dailyData = {};
+        const severityData = { critical: 0, high: 0, medium: 0, low: 0 };
+        
+        for (let i = 0; i < 30; i++) {
+            const date = new Date(thirtyDaysAgo.getTime() + i * 24 * 60 * 60 * 1000);
+            const dateStr = date.toISOString().split('T')[0];
+            dailyData[dateStr] = 0;
+        }
+        
+        // Count alerts by day and severity
+        alerts.forEach(alert => {
+            const alertDate = alert.created_at.split('T')[0];
+            if (dailyData.hasOwnProperty(alertDate)) {
+                dailyData[alertDate]++;
+            }
+            
+            if (severityData.hasOwnProperty(alert.severity)) {
+                severityData[alert.severity]++;
+            }
+        });
+        
+        return {
+            daily: {
+                labels: Object.keys(dailyData).map(date => new Date(date).toLocaleDateString()),
+                data: Object.values(dailyData)
+            },
+            severity: {
+                labels: Object.keys(severityData).map(s => s.charAt(0).toUpperCase() + s.slice(1)),
+                data: Object.values(severityData)
+            }
+        };
+    }
+    
+    // Initialize charts
+    document.addEventListener('DOMContentLoaded', function() {
+        const chartData = processAlertData();
+        
+        // Alerts timeline chart
+        const alertsCtx = document.getElementById('alertsChart').getContext('2d');
+        new Chart(alertsCtx, {
+            type: 'line',
+            data: {
+                labels: chartData.daily.labels,
+                datasets: [{
+                    label: 'Daily Alerts',
+                    data: chartData.daily.data,
+                    borderColor: 'rgb(255, 99, 132)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                    tension: 0.1,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        // Severity distribution chart
+        const severityCtx = document.getElementById('severityChart').getContext('2d');
+        new Chart(severityCtx, {
+            type: 'doughnut',
+            data: {
+                labels: chartData.severity.labels,
+                datasets: [{
+                    data: chartData.severity.data,
+                    backgroundColor: [
+                        'rgb(220, 53, 69)',   // Critical - red
+                        'rgb(255, 193, 7)',   // High - yellow
+                        'rgb(13, 202, 240)',  // Medium - cyan
+                        'rgb(25, 135, 84)'    // Low - green
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        
+        // Initialize sensor mini-charts
+        initializeSensorCharts();
+        
+        // Update sensor status
+        updateSensorStatus();
+        setInterval(updateSensorStatus, 30000);
+        
+        // Calculate average response time
+        calculateMetrics();
+    });
+    
+    // Initialize mini-charts for sensors
+    function initializeSensorCharts() {
+        sensors.forEach(sensor => {
+            const canvas = document.getElementById(`sensor-chart-${sensor.id}`);
+            if (canvas) {
+                const ctx = canvas.getContext('2d');
+                
+                // Generate sample data for demonstration
+                const data = Array.from({length: 24}, () => Math.random() * 50 + 10);
+                
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+                        datasets: [{
+                            data: data,
+                            borderColor: sensor.last_reading > sensor.threshold_value ? 'rgb(220, 53, 69)' : 'rgb(25, 135, 84)',
+                            backgroundColor: 'transparent',
+                            borderWidth: 1,
+                            pointRadius: 0,
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: { display: false },
+                            y: { display: false }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        elements: {
+                            point: { radius: 0 }
+                        }
+                    }
+                });
+            }
+        });
+    }
+    
+    // Update sensor status
+    function updateSensorStatus() {
+        fetch('/api/sensors')
+            .then(response => response.json())
+            .then(sensorData => {
+                sensorData.forEach(sensor => {
+                    const statusElement = document.getElementById(`sensor-status-${sensor.id}`);
+                    if (statusElement) {
+                        if (sensor.is_online) {
+                            statusElement.textContent = 'Online';
+                            statusElement.className = 'badge bg-success';
+                        } else {
+                            statusElement.textContent = 'Offline';
+                            statusElement.className = 'badge bg-danger';
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error updating sensor status:', error);
+            });
+    }
+    
+    // Calculate system metrics
+    function calculateMetrics() {
+        // Calculate average response time
+        let totalResponseTime = 0;
+        let resolvedAlerts = 0;
+        
+        alerts.forEach(alert => {
+            if (alert.resolved_at) {
+                const created = new Date(alert.created_at);
+                const resolved = new Date(alert.resolved_at);
+                const responseTime = (resolved - created) / (1000 * 60); // minutes
+                totalResponseTime += responseTime;
+                resolvedAlerts++;
+            }
+        });
+        
+        if (resolvedAlerts > 0) {
+            const avgResponseTime = Math.round(totalResponseTime / resolvedAlerts);
+            document.getElementById('avg-response-time').textContent = `${avgResponseTime}m`;
+        }
+    }
+    
+    // Export data function
+    function exportData() {
+        const data = {
+            alerts: alerts,
+            sensors: sensors,
+            exported_at: new Date().toISOString()
+        };
+        
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `fire_system_data_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showAlert('Data exported successfully', 'success');
+    }
+    
+    // Generate report function
+    function generateReport() {
+        const reportData = {
+            period: 'Last 30 Days',
+            total_alerts: alerts.length,
+            active_alerts: alerts.filter(a => a.status === 'active').length,
+            resolved_alerts: alerts.filter(a => a.status === 'resolved').length,
+            active_sensors: sensors.length,
+            generated_at: new Date().toLocaleString()
+        };
+        
+        const reportText = `
+FIRE RESPONSE SYSTEM REPORT
+${reportData.period}
+
+SUMMARY:
+- Total Alerts: ${reportData.total_alerts}
+- Active Alerts: ${reportData.active_alerts}
+- Resolved Alerts: ${reportData.resolved_alerts}
+- Active Sensors: ${reportData.active_sensors}
+
+ALERT BREAKDOWN BY SEVERITY:
+- Critical: ${alerts.filter(a => a.severity === 'critical').length}
+- High: ${alerts.filter(a => a.severity === 'high').length}
+- Medium: ${alerts.filter(a => a.severity === 'medium').length}
+- Low: ${alerts.filter(a => a.severity === 'low').length}
+
+ALERT TYPES:
+- Sensor Detection: ${alerts.filter(a => a.type === 'sensor_detection').length}
+- Community Reports: ${alerts.filter(a => a.type === 'community_report').length}
+- Manual Triggers: ${alerts.filter(a => a.type === 'manual_trigger').length}
+
+Generated on: ${reportData.generated_at}
+        `;
+        
+        const blob = new Blob([reportText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `fire_system_report_${new Date().toISOString().split('T')[0]}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showAlert('Report generated successfully', 'success');
+    }
+</script>
+{% endblock %}

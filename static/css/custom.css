@@ -1,0 +1,319 @@
+/* Fire Response System Custom Styles */
+
+/* Root variables for consistency */
+:root {
+    --fire-danger: #dc3545;
+    --fire-warning: #fd7e14;
+    --fire-success: #198754;
+    --fire-info: #0dcaf0;
+    --fire-primary: #0d6efd;
+    --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+}
+
+/* Enhanced card shadows for better depth */
+.card {
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow 0.15s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: var(--shadow);
+}
+
+/* Alert severity indicators */
+.alert-critical {
+    border-left: 4px solid var(--fire-danger);
+    animation: pulse-danger 2s infinite;
+}
+
+.alert-high {
+    border-left: 4px solid var(--fire-warning);
+}
+
+.alert-medium {
+    border-left: 4px solid var(--fire-info);
+}
+
+.alert-low {
+    border-left: 4px solid var(--fire-success);
+}
+
+/* Pulse animation for critical alerts */
+@keyframes pulse-danger {
+    0% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+    }
+}
+
+/* Status indicators */
+.status-online {
+    color: var(--fire-success);
+    position: relative;
+}
+
+.status-offline {
+    color: var(--fire-danger);
+}
+
+.status-online::before {
+    content: '';
+    position: absolute;
+    left: -15px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    background-color: var(--fire-success);
+    border-radius: 50%;
+    animation: blink 2s infinite;
+}
+
+@keyframes blink {
+    0%, 50% {
+        opacity: 1;
+    }
+    51%, 100% {
+        opacity: 0.3;
+    }
+}
+
+/* Sensor status cards */
+.sensor-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.sensor-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--fire-info), transparent);
+    animation: scan 3s infinite;
+}
+
+@keyframes scan {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Fire report form enhancements */
+.fire-report-form {
+    position: relative;
+}
+
+.fire-report-form::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, var(--fire-danger), var(--fire-warning), var(--fire-danger));
+    z-index: -1;
+    border-radius: 0.375rem;
+}
+
+/* Navigation buttons */
+.nav-button {
+    position: relative;
+    overflow: hidden;
+}
+
+.nav-button::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 0.3s, height 0.3s;
+}
+
+.nav-button:hover::after {
+    width: 300px;
+    height: 300px;
+}
+
+/* Real-time updates indicator */
+.update-indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1050;
+    padding: 0.5rem 1rem;
+    background: var(--bs-dark);
+    color: var(--bs-light);
+    border-radius: 0.375rem;
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: all 0.3s ease;
+}
+
+.update-indicator.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Emergency contact cards */
+.contact-card {
+    border-left: 4px solid var(--fire-primary);
+    transition: all 0.3s ease;
+}
+
+.contact-card:hover {
+    border-left-color: var(--fire-danger);
+    transform: translateX(5px);
+}
+
+/* Loading states */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: 0.375rem;
+}
+
+.loading-spinner {
+    width: 2rem;
+    height: 2rem;
+    border: 0.25rem solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Map container */
+.map-container {
+    position: relative;
+    border-radius: 0.375rem;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+/* Alert toast positioning */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1080;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .sensor-card::before {
+        display: none;
+    }
+    
+    .contact-card:hover {
+        transform: none;
+    }
+    
+    .update-indicator {
+        right: 10px;
+        top: 10px;
+        font-size: 0.875rem;
+        padding: 0.375rem 0.75rem;
+    }
+}
+
+/* Print styles for reports */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .card {
+        box-shadow: none;
+        border: 1px solid #dee2e6;
+    }
+    
+    .alert-critical,
+    .alert-high,
+    .alert-medium,
+    .alert-low {
+        border-left: 4px solid #000;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .card {
+        border: 2px solid var(--bs-border-color);
+    }
+    
+    .status-online::before {
+        border: 1px solid var(--bs-body-color);
+    }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    .sensor-card::before,
+    .status-online::before,
+    .alert-critical {
+        animation: none;
+    }
+    
+    .nav-button::after,
+    .contact-card,
+    .loading-overlay {
+        transition: none;
+    }
+}
+
+/* Focus styles for accessibility */
+.btn:focus,
+.form-control:focus,
+.form-select:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Custom scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: var(--bs-gray-100);
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--bs-gray-400);
+    border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--bs-gray-600);
+}

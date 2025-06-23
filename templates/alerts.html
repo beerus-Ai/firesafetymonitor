@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}Alerts - Fire Response System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>
+            <i data-feather="alert-triangle" class="me-2"></i>
+            Fire Alerts
+        </h1>
+        <p class="lead">Manage and monitor all fire alerts in the system</p>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <a href="{{ url_for('report_fire') }}" class="btn btn-danger">
+            <i data-feather="phone" class="me-2"></i>
+            Report New Fire
+        </a>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="all" {{ 'selected' if request.args.get('status') == 'all' else '' }}>All Statuses</option>
+                            <option value="active" {{ 'selected' if request.args.get('status') == 'active' else '' }}>Active</option>
+                            <option value="resolved" {{ 'selected' if request.args.get('status') == 'resolved' else '' }}>Resolved</option>
+                            <option value="false_alarm" {{ 'selected' if request.args.get('status') == 'false_alarm' else '' }}>False Alarm</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="severity" class="form-label">Severity</label>
+                        <select class="form-select" id="severity" name="severity">
+                            <option value="all" {{ 'selected' if request.args.get('severity') == 'all' else '' }}>All Severities</option>
+                            <option value="critical" {{ 'selected' if request.args.get('severity') == 'critical' else '' }}>Critical</option>
+                            <option value="high" {{ 'selected' if request.args.get('severity') == 'high' else '' }}>High</option>
+                            <option value="medium" {{ 'selected' if request.args.get('severity') == 'medium' else '' }}>Medium</option>
+                            <option value="low" {{ 'selected' if request.args.get('severity') == 'low' else '' }}>Low</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i data-feather="filter" class="me-2"></i>
+                            Apply Filters
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                            <i data-feather="x" class="me-2"></i>
+                            Clear
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alerts List -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Alerts ({{ alerts|length }})</h5>
+                <button class="btn btn-outline-primary btn-sm" onclick="refreshAlerts()">
+                    <i data-feather="refresh-cw" class="me-1"></i>
+                    Refresh
+                </button>
+            </div>
+            <div class="card-body p-0">
+                {% if alerts %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Alert</th>
+                                    <th>Severity</th>
+                                    <th>Status</th>
+                                    <th>Location</th>
+                                    <th>Time</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for alert in alerts %}
+                                <tr class="alert-row" data-alert-id="{{ alert.id }}">
+                                    <td>
+                                        <div class="fw-bold">{{ alert.title }}</div>
+                                        {% if alert.description %}
+                                            <small class="text-muted">{{ alert.description[:100] }}{% if alert.description|length > 100 %}...{% endif %}</small>
+                                        {% endif %}
+                                        <br>
+                                        <span class="badge bg-secondary">{{ alert.alert_type.value.replace('_', ' ').title() }}</span>
+                                        {% if alert.sensor_reading %}
+                                            <span class="badge bg-info">Reading: {{ alert.sensor_reading }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'danger' if alert.severity == 'critical' else 'warning' if alert.severity == 'high' else 'info' if alert.severity == 'medium' else 'success' }}">
+                                            {{ alert.severity.title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-{{ 'danger' if alert.status.value == 'active' else 'success' if alert.status.value == 'resolved' else 'secondary' }}">
+                                            {{ alert.status.value.replace('_', ' ').title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if alert.address %}
+                                            <div class="text-truncate" style="max-width: 200px;" title="{{ alert.address }}">
+                                                {{ alert.address }}
+                                            </div>
+                                        {% endif %}
+                                        {% if alert.latitude and alert.longitude %}
+                                            <small class="text-muted">
+                                                {{ alert.latitude|round(4) }}, {{ alert.longitude|round(4) }}
+                                            </small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div>{{ alert.created_at.strftime('%m/%d/%Y') }}</div>
+                                        <small class="text-muted">{{ alert.created_at.strftime('%H:%M:%S') }}</small>
+                                        {% if alert.resolved_at %}
+                                            <br><small class="text-success">Resolved: {{ alert.resolved_at.strftime('%m/%d %H:%M') }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            {% if alert.status.value == 'active' %}
+                                                <button class="btn btn-success btn-sm" onclick="resolveAlert({{ alert.id }})" title="Resolve Alert">
+                                                    <i data-feather="check" width="16" height="16"></i>
+                                                </button>
+                                                <button class="btn btn-secondary btn-sm" onclick="markFalseAlarm({{ alert.id }})" title="Mark as False Alarm">
+                                                    <i data-feather="x" width="16" height="16"></i>
+                                                </button>
+                                            {% endif %}
+                                            <button class="btn btn-primary btn-sm" onclick="getNavigation({{ alert.id }})" title="Get Navigation">
+                                                <i data-feather="navigation" width="16" height="16"></i>
+                                            </button>
+                                            <button class="btn btn-info btn-sm" onclick="viewAlertDetails({{ alert.id }})" title="View Details">
+                                                <i data-feather="eye" width="16" height="16"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i data-feather="check-circle" width="64" height="64" class="text-success mb-3"></i>
+                        <h4>No Alerts Found</h4>
+                        <p class="text-muted">No alerts match your current filter criteria.</p>
+                        <button class="btn btn-outline-primary" onclick="clearFilters()">
+                            Clear Filters
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alert Details Modal -->
+<div class="modal fade" id="alertDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Alert Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="alertDetailsContent">
+                <!-- Content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Clear filters
+    function clearFilters() {
+        window.location.href = '{{ url_for("alerts") }}';
+    }
+    
+    // Refresh alerts
+    function refreshAlerts() {
+        location.reload();
+    }
+    
+    // Resolve alert
+    function resolveAlert(alertId) {
+        if (confirm('Are you sure you want to resolve this alert?')) {
+            fetch(`/api/alerts/${alertId}/resolve`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Alert resolved successfully', 'success');
+                    // Update the alert row
+                    const row = document.querySelector(`[data-alert-id="${alertId}"]`);
+                    if (row) {
+                        const statusBadge = row.querySelector('td:nth-child(3) .badge');
+                        statusBadge.textContent = 'Resolved';
+                        statusBadge.className = 'badge bg-success';
+                        
+                        // Remove action buttons
+                        const actionButtons = row.querySelector('.btn-group');
+                        actionButtons.innerHTML = `
+                            <button class="btn btn-primary btn-sm" onclick="getNavigation(${alertId})" title="Get Navigation">
+                                <i data-feather="navigation" width="16" height="16"></i>
+                            </button>
+                            <button class="btn btn-info btn-sm" onclick="viewAlertDetails(${alertId})" title="View Details">
+                                <i data-feather="eye" width="16" height="16"></i>
+                            </button>
+                        `;
+                        feather.replace();
+                    }
+                } else {
+                    showAlert('Failed to resolve alert: ' + data.error, 'danger');
+                }
+            })
+            .catch(error => {
+                showAlert('Error resolving alert', 'danger');
+            });
+        }
+    }
+    
+    // Mark as false alarm
+    function markFalseAlarm(alertId) {
+        if (confirm('Are you sure this is a false alarm?')) {
+            // This would need to be implemented in the backend
+            showAlert('False alarm functionality not yet implemented', 'warning');
+        }
+    }
+    
+    // Get navigation to alert
+    function getNavigation(alertId) {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    const location = `${position.coords.latitude},${position.coords.longitude}`;
+                    
+                    fetch(`/api/alerts/${alertId}/navigation?location=${location}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.route_to_alert) {
+                                const route = data.route_to_alert;
+                                const alertInfo = data.alert;
+                                
+                                let message = `Navigation to Alert: ${alertInfo.title}\n\n`;
+                                message += `Destination: ${route.end_address}\n`;
+                                message += `Distance: ${route.distance}\n`;
+                                message += `Duration: ${route.duration}\n`;
+                                
+                                if (route.duration_in_traffic) {
+                                    message += `Duration in Traffic: ${route.duration_in_traffic}\n`;
+                                }
+                                
+                                if (data.nearest_fire_stations && data.nearest_fire_stations.length > 0) {
+                                    message += `\nNearest Fire Station: ${data.nearest_fire_stations[0].name}`;
+                                }
+                                
+                                alert(message);
+                                
+                                // Optionally open in Google Maps
+                                if (confirm('Open navigation in Google Maps?')) {
+                                    const mapsUrl = `https://www.google.com/maps/dir/${position.coords.latitude},${position.coords.longitude}/${alertInfo.latitude},${alertInfo.longitude}`;
+                                    window.open(mapsUrl, '_blank');
+                                }
+                            } else {
+                                showAlert('Navigation information not available', 'warning');
+                            }
+                        })
+                        .catch(error => {
+                            showAlert('Error getting navigation', 'danger');
+                        });
+                },
+                error => {
+                    showAlert('Unable to get your location for navigation', 'warning');
+                }
+            );
+        } else {
+            showAlert('Geolocation is not supported by this browser', 'warning');
+        }
+    }
+    
+    // View alert details
+    function viewAlertDetails(alertId) {
+        fetch(`/api/alerts`)
+            .then(response => response.json())
+            .then(alerts => {
+                const alert = alerts.find(a => a.id === alertId);
+                if (alert) {
+                    const modalContent = document.getElementById('alertDetailsContent');
+                    modalContent.innerHTML = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Alert Information</h6>
+                                <table class="table table-sm">
+                                    <tr><td><strong>Title:</strong></td><td>${alert.title}</td></tr>
+                                    <tr><td><strong>Type:</strong></td><td>${alert.type.replace('_', ' ')}</td></tr>
+                                    <tr><td><strong>Severity:</strong></td><td><span class="badge bg-${alert.severity === 'critical' ? 'danger' : alert.severity === 'high' ? 'warning' : 'info'}">${alert.severity}</span></td></tr>
+                                    <tr><td><strong>Status:</strong></td><td><span class="badge bg-${alert.status === 'active' ? 'danger' : 'success'}">${alert.status}</span></td></tr>
+                                    <tr><td><strong>Created:</strong></td><td>${new Date(alert.created_at).toLocaleString()}</td></tr>
+                                    ${alert.resolved_at ? `<tr><td><strong>Resolved:</strong></td><td>${new Date(alert.resolved_at).toLocaleString()}</td></tr>` : ''}
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Location</h6>
+                                <table class="table table-sm">
+                                    ${alert.address ? `<tr><td><strong>Address:</strong></td><td>${alert.address}</td></tr>` : ''}
+                                    <tr><td><strong>Coordinates:</strong></td><td>${alert.latitude.toFixed(6)}, ${alert.longitude.toFixed(6)}</td></tr>
+                                    ${alert.sensor_reading ? `<tr><td><strong>Sensor Reading:</strong></td><td>${alert.sensor_reading}</td></tr>` : ''}
+                                    ${alert.sensor_name ? `<tr><td><strong>Sensor:</strong></td><td>${alert.sensor_name}</td></tr>` : ''}
+                                </table>
+                            </div>
+                        </div>
+                        ${alert.description ? `
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <h6>Description</h6>
+                                    <p>${alert.description}</p>
+                                </div>
+                            </div>
+                        ` : ''}
+                    `;
+                    
+                    const modal = new bootstrap.Modal(document.getElementById('alertDetailsModal'));
+                    modal.show();
+                } else {
+                    showAlert('Alert details not found', 'danger');
+                }
+            })
+            .catch(error => {
+                showAlert('Error loading alert details', 'danger');
+            });
+    }
+</script>
+{% endblock %}

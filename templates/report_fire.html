@@ -1,0 +1,437 @@
+{% extends "base.html" %}
+
+{% block title %}Report Fire - Fire Response System{% endblock %}
+
+{% block head %}
+<!-- Google Maps API (optional for map integration) -->
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap"></script>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="text-danger">
+            <i data-feather="phone" class="me-2"></i>
+            Report Fire Emergency
+        </h1>
+        <p class="lead">Report a fire incident to alert emergency responders immediately</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i data-feather="alert-triangle" class="me-2"></i>
+                    Fire Report Form
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="fireReportForm">
+                    <!-- Location Information -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-danger">Location Information</h6>
+                            <hr>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="latitude" class="form-label">Latitude *</label>
+                            <input type="number" class="form-control" id="latitude" name="latitude" step="any" required>
+                            <div class="form-text">GPS coordinates will be auto-detected if available</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="longitude" class="form-label">Longitude *</label>
+                            <input type="number" class="form-control" id="longitude" name="longitude" step="any" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <button type="button" class="btn btn-outline-primary" onclick="getCurrentLocation()">
+                                <i data-feather="map-pin" class="me-2"></i>
+                                Use My Current Location
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address/Landmark</label>
+                        <textarea class="form-control" id="address" name="address" rows="2" 
+                                placeholder="Enter nearby address, landmark, or description of location"></textarea>
+                    </div>
+                    
+                    <!-- Fire Details -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-danger">Fire Details</h6>
+                            <hr>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="severity" class="form-label">Severity Level *</label>
+                            <select class="form-select" id="severity" name="severity" required>
+                                <option value="">Select severity...</option>
+                                <option value="low">Low - Small fire, contained</option>
+                                <option value="medium">Medium - Moderate fire, spreading slowly</option>
+                                <option value="high">High - Large fire, spreading rapidly</option>
+                                <option value="critical">Critical - Massive fire, immediate danger</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="fireType" class="form-label">Type of Fire</label>
+                            <select class="form-select" id="fireType" name="fireType">
+                                <option value="">Select type...</option>
+                                <option value="building">Building/Structure</option>
+                                <option value="vehicle">Vehicle</option>
+                                <option value="wildfire">Wildfire/Brush</option>
+                                <option value="electrical">Electrical</option>
+                                <option value="chemical">Chemical/Hazardous</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description *</label>
+                        <textarea class="form-control" id="description" name="description" rows="4" required
+                                placeholder="Describe what you see: size of fire, what's burning, smoke color, wind direction, people in danger, etc."></textarea>
+                    </div>
+                    
+                    <!-- People in Danger -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="peopleInDanger" class="form-label">People in Danger?</label>
+                            <select class="form-select" id="peopleInDanger" name="peopleInDanger">
+                                <option value="unknown">Unknown</option>
+                                <option value="no">No</option>
+                                <option value="yes">Yes</option>
+                                <option value="evacuated">Yes, but evacuated</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="estimatedPeople" class="form-label">Estimated Number of People</label>
+                            <input type="number" class="form-control" id="estimatedPeople" name="estimatedPeople" min="0">
+                        </div>
+                    </div>
+                    
+                    <!-- Reporter Information -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-danger">Your Information (Optional)</h6>
+                            <hr>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="reporterName" class="form-label">Your Name</label>
+                            <input type="text" class="form-control" id="reporterName" name="reporterName">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="reporterPhone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="reporterPhone" name="reporterPhone">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="reporterEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="reporterEmail" name="reporterEmail">
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="row">
+                        <div class="col-12">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i data-feather="phone" class="me-2"></i>
+                                Submit Fire Report
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-lg ms-2" onclick="clearForm()">
+                                <i data-feather="x" class="me-2"></i>
+                                Clear Form
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Emergency Information -->
+    <div class="col-lg-4">
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i data-feather="info" class="me-2"></i>
+                    Emergency Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <h6><i data-feather="phone" class="me-2"></i>Call 911 First!</h6>
+                    <p class="mb-0">If this is an active emergency, call 911 immediately before or after submitting this report.</p>
+                </div>
+                
+                <h6>What to do while waiting for help:</h6>
+                <ul class="list-unstyled">
+                    <li><i data-feather="check" class="text-success me-2"></i>Ensure your safety first</li>
+                    <li><i data-feather="check" class="text-success me-2"></i>Evacuate if necessary</li>
+                    <li><i data-feather="check" class="text-success me-2"></i>Help others evacuate safely</li>
+                    <li><i data-feather="check" class="text-success me-2"></i>Stay away from smoke</li>
+                    <li><i data-feather="check" class="text-success me-2"></i>Meet at designated safe area</li>
+                </ul>
+                
+                <hr>
+                
+                <h6>Fire Safety Tips:</h6>
+                <ul class="list-unstyled">
+                    <li><i data-feather="x" class="text-danger me-2"></i>Never use elevators</li>
+                    <li><i data-feather="x" class="text-danger me-2"></i>Don't inhale smoke</li>
+                    <li><i data-feather="x" class="text-danger me-2"></i>Don't go back inside</li>
+                    <li><i data-feather="x" class="text-danger me-2"></i>Don't use water on electrical fires</li>
+                </ul>
+                
+                <div class="alert alert-info mt-3">
+                    <small>
+                        <strong>Report Status:</strong> Once submitted, emergency responders will be automatically notified via SMS and email.
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Map placeholder -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i data-feather="map" class="me-2"></i>
+                    Location Preview
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="map" style="height: 200px; background-color: #f8f9fa; border: 1px dashed #dee2e6; display: flex; align-items: center; justify-content: center;">
+                    <div class="text-center text-muted">
+                        <i data-feather="map-pin" width="32" height="32"></i>
+                        <br>
+                        <small>Map will show selected location</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Form submission handler
+    document.getElementById('fireReportForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate form
+        if (!validateForm()) {
+            return;
+        }
+        
+        // Show loading state
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting Report...';
+        submitBtn.disabled = true;
+        
+        // Collect form data
+        const formData = new FormData(e.target);
+        const reportData = {
+            latitude: parseFloat(formData.get('latitude')),
+            longitude: parseFloat(formData.get('longitude')),
+            address: formData.get('address'),
+            severity: formData.get('severity'),
+            description: formData.get('description'),
+            fire_type: formData.get('fireType'),
+            people_in_danger: formData.get('peopleInDanger'),
+            estimated_people: formData.get('estimatedPeople') ? parseInt(formData.get('estimatedPeople')) : null,
+            reporter_name: formData.get('reporterName'),
+            reporter_phone: formData.get('reporterPhone'),
+            reporter_email: formData.get('reporterEmail')
+        };
+        
+        // Submit report
+        fetch('/api/report-fire', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(reportData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('Fire report submitted successfully! Emergency responders have been notified.', 'success');
+                
+                // Clear form
+                e.target.reset();
+                
+                // Redirect to alerts page after 3 seconds
+                setTimeout(() => {
+                    window.location.href = '/alerts';
+                }, 3000);
+                
+            } else {
+                showAlert('Failed to submit fire report: ' + data.error, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error submitting fire report:', error);
+            showAlert('Error submitting fire report. Please try again.', 'danger');
+        })
+        .finally(() => {
+            // Restore button
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        });
+    });
+    
+    // Form validation
+    function validateForm() {
+        const latitude = document.getElementById('latitude').value;
+        const longitude = document.getElementById('longitude').value;
+        const severity = document.getElementById('severity').value;
+        const description = document.getElementById('description').value;
+        
+        if (!latitude || !longitude) {
+            showAlert('Please provide location coordinates', 'danger');
+            return false;
+        }
+        
+        if (!severity) {
+            showAlert('Please select fire severity', 'danger');
+            return false;
+        }
+        
+        if (!description.trim()) {
+            showAlert('Please provide a description of the fire', 'danger');
+            return false;
+        }
+        
+        if (Math.abs(latitude) > 90 || Math.abs(longitude) > 180) {
+            showAlert('Invalid coordinates. Please check latitude and longitude values.', 'danger');
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // Get current location
+    function getCurrentLocation() {
+        if (navigator.geolocation) {
+            const btn = event.target;
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Getting Location...';
+            btn.disabled = true;
+            
+            navigator.geolocation.getCurrentPosition(
+                position => {
+                    document.getElementById('latitude').value = position.coords.latitude.toFixed(6);
+                    document.getElementById('longitude').value = position.coords.longitude.toFixed(6);
+                    
+                    // Try to get address from coordinates
+                    reverseGeocode(position.coords.latitude, position.coords.longitude);
+                    
+                    showAlert('Location detected successfully', 'success');
+                },
+                error => {
+                    let errorMessage = 'Unable to get your location. ';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage += 'Please enable location permissions.';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage += 'Location information unavailable.';
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage += 'Location request timed out.';
+                            break;
+                    }
+                    showAlert(errorMessage, 'warning');
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 60000
+                }
+            );
+            
+            // Restore button after 5 seconds regardless of outcome
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }, 5000);
+        } else {
+            showAlert('Geolocation is not supported by this browser', 'warning');
+        }
+    }
+    
+    // Reverse geocode coordinates to address
+    function reverseGeocode(lat, lng) {
+        // This would typically use Google Maps Geocoding API
+        // For now, we'll just show the coordinates
+        document.getElementById('address').value = `Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    }
+    
+    // Clear form
+    function clearForm() {
+        if (confirm('Are you sure you want to clear all form data?')) {
+            document.getElementById('fireReportForm').reset();
+            showAlert('Form cleared', 'info');
+        }
+    }
+    
+    // Update map preview when coordinates change
+    document.getElementById('latitude').addEventListener('input', updateMapPreview);
+    document.getElementById('longitude').addEventListener('input', updateMapPreview);
+    
+    function updateMapPreview() {
+        const lat = document.getElementById('latitude').value;
+        const lng = document.getElementById('longitude').value;
+        
+        if (lat && lng) {
+            // Update map display
+            const mapDiv = document.getElementById('map');
+            mapDiv.innerHTML = `
+                <div class="text-center">
+                    <i data-feather="map-pin" width="32" height="32" class="text-danger"></i>
+                    <br>
+                    <strong>Location Selected</strong>
+                    <br>
+                    <small>${parseFloat(lat).toFixed(4)}, ${parseFloat(lng).toFixed(4)}</small>
+                </div>
+            `;
+            feather.replace();
+        }
+    }
+    
+    // Auto-save form data to localStorage
+    const formElements = document.querySelectorAll('#fireReportForm input, #fireReportForm select, #fireReportForm textarea');
+    formElements.forEach(element => {
+        element.addEventListener('input', function() {
+            localStorage.setItem('fireReport_' + this.name, this.value);
+        });
+        
+        // Restore saved values
+        const savedValue = localStorage.getItem('fireReport_' + element.name);
+        if (savedValue) {
+            element.value = savedValue;
+        }
+    });
+    
+    // Clear localStorage when form is successfully submitted
+    function clearSavedData() {
+        formElements.forEach(element => {
+            localStorage.removeItem('fireReport_' + element.name);
+        });
+    }
+</script>
+{% endblock %}
