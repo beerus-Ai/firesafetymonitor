@@ -33,8 +33,9 @@ with app.app_context():
     import models  # noqa: F401
     db.create_all()
 
-# Import routes
+# Import routes and WhatsApp bot
 import routes  # noqa: F401
+import whatsapp_bot  # noqa: F401
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

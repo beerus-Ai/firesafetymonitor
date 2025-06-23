@@ -96,7 +96,26 @@ The system uses SQLAlchemy models with the following key entities:
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+**June 23, 2025 - WhatsApp Integration Complete**
+- ✅ Added WhatsApp chatbot for community fire reporting
+- ✅ Implemented multi-step conversation flow for location, description, and contact info
+- ✅ Created intelligent severity detection from user descriptions
+- ✅ Added webhook endpoint for Twilio WhatsApp integration
+- ✅ Built comprehensive management interface at /whatsapp-bot
+- ✅ Demonstrated complete fire reporting workflow via WhatsApp
+
+**June 23, 2025 - Core System Setup**
+- ✅ Initial Fire Response and Monitoring System setup
+- ✅ Arduino sensor integration with real-time monitoring
+- ✅ SMS alerts via Twilio for emergency notifications
+- ✅ Web dashboard with sensor status and alert management
+- ✅ GPS navigation support for emergency responders
+- ✅ Community fire reporting through web interface
+
 ## Changelog
 
 Changelog:
-- June 23, 2025. Initial setup
+- June 23, 2025. WhatsApp bot integration completed
+- June 23, 2025. Initial setup with Arduino compatibility

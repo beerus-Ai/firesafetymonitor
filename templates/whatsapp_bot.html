@@ -1,0 +1,510 @@
+{% extends "base.html" %}
+
+{% block title %}WhatsApp Bot - Fire Response System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1>
+            <i data-feather="message-circle" class="me-2"></i>
+            WhatsApp Fire Reporting Bot
+        </h1>
+        <p class="lead">Community fire reporting through WhatsApp messaging</p>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <button class="btn btn-success" onclick="testWhatsAppBot()">
+            <i data-feather="play" class="me-2"></i>
+            Test Bot
+        </button>
+    </div>
+</div>
+
+<!-- Bot Status Card -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i data-feather="activity" class="me-2"></i>
+                    Bot Status & Configuration
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span>WhatsApp Connection:</span>
+                            <span class="badge bg-success" id="whatsapp-status">Active</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span>Webhook Endpoint:</span>
+                            <code class="text-info">/webhook/whatsapp</code>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span>Bot Number:</span>
+                            <span class="text-muted">Twilio Sandbox</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Quick Setup:</h6>
+                        <ol class="list-unstyled">
+                            <li class="mb-2">
+                                <i data-feather="check-circle" class="text-success me-2" width="16" height="16"></i>
+                                Twilio credentials configured
+                            </li>
+                            <li class="mb-2">
+                                <i data-feather="check-circle" class="text-success me-2" width="16" height="16"></i>
+                                Webhook endpoint ready
+                            </li>
+                            <li class="mb-2">
+                                <i data-feather="circle" class="text-warning me-2" width="16" height="16"></i>
+                                Configure Twilio WhatsApp sandbox
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- How to Use -->
+    <div class="col-lg-4">
+        <div class="card border-info">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i data-feather="help-circle" class="me-2"></i>
+                    How to Use
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="small mb-3">Community members can report fires by:</p>
+                <ol class="small">
+                    <li>Adding the Twilio WhatsApp number</li>
+                    <li>Sending "fire" or "emergency"</li>
+                    <li>Following the guided conversation</li>
+                    <li>Providing location and details</li>
+                </ol>
+                <div class="alert alert-warning small">
+                    <strong>Note:</strong> Always call 911 for immediate emergencies!
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Conversation Flow -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i data-feather="message-square" class="me-2"></i>
+                    Conversation Flow Demo
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <h6>User Interaction Steps:</h6>
+                        <div class="timeline">
+                            <div class="timeline-item mb-3">
+                                <div class="timeline-marker bg-primary"></div>
+                                <div class="timeline-content">
+                                    <strong>1. Initial Contact</strong>
+                                    <p class="small mb-1">User sends: "fire" or "emergency"</p>
+                                    <div class="bg-light p-2 rounded small">
+                                        Bot responds with welcome message and options
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="timeline-item mb-3">
+                                <div class="timeline-marker bg-warning"></div>
+                                <div class="timeline-content">
+                                    <strong>2. Location Collection</strong>
+                                    <p class="small mb-1">User provides location information</p>
+                                    <div class="bg-light p-2 rounded small">
+                                        Accepts coordinates, addresses, or landmarks
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="timeline-item mb-3">
+                                <div class="timeline-marker bg-info"></div>
+                                <div class="timeline-content">
+                                    <strong>3. Fire Description</strong>
+                                    <p class="small mb-1">User describes the fire situation</p>
+                                    <div class="bg-light p-2 rounded small">
+                                        Bot analyzes severity and danger level
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="timeline-item">
+                                <div class="timeline-marker bg-success"></div>
+                                <div class="timeline-content">
+                                    <strong>4. Alert Created</strong>
+                                    <p class="small mb-1">Emergency responders notified</p>
+                                    <div class="bg-light p-2 rounded small">
+                                        Alert appears in dashboard and SMS sent
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <h6>Sample Conversation:</h6>
+                        <div class="chat-demo border rounded p-3" style="height: 350px; overflow-y: auto;">
+                            <div class="message-user mb-2">
+                                <div class="bg-primary text-white p-2 rounded">fire</div>
+                                <small class="text-muted">User</small>
+                            </div>
+                            
+                            <div class="message-bot mb-2">
+                                <div class="bg-light p-2 rounded">
+                                    🚨 Fire Emergency Reporting System<br><br>
+                                    1️⃣ Report a new fire emergency<br>
+                                    2️⃣ Get emergency contact information<br>
+                                    3️⃣ Get fire safety tips
+                                </div>
+                                <small class="text-muted">Bot</small>
+                            </div>
+                            
+                            <div class="message-user mb-2">
+                                <div class="bg-primary text-white p-2 rounded">1</div>
+                                <small class="text-muted">User</small>
+                            </div>
+                            
+                            <div class="message-bot mb-2">
+                                <div class="bg-light p-2 rounded">
+                                    📍 Location Information Needed<br><br>
+                                    Please provide the fire location...
+                                </div>
+                                <small class="text-muted">Bot</small>
+                            </div>
+                            
+                            <div class="message-user mb-2">
+                                <div class="bg-primary text-white p-2 rounded">123 Main Street, downtown</div>
+                                <small class="text-muted">User</small>
+                            </div>
+                            
+                            <div class="message-bot">
+                                <div class="bg-light p-2 rounded">
+                                    🔥 Describe the Fire<br><br>
+                                    Please describe what you see...
+                                </div>
+                                <small class="text-muted">Bot</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent WhatsApp Reports -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i data-feather="list" class="me-2"></i>
+                    Recent WhatsApp Reports
+                </h5>
+                <button class="btn btn-outline-primary btn-sm" onclick="refreshWhatsAppReports()">
+                    <i data-feather="refresh-cw" class="me-1"></i>
+                    Refresh
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="whatsapp-reports-container">
+                    <div class="text-center py-4">
+                        <i data-feather="message-circle" width="48" height="48" class="text-muted mb-3"></i>
+                        <h5>No WhatsApp Reports Yet</h5>
+                        <p class="text-muted">When community members report fires via WhatsApp, they will appear here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test Interface -->
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i data-feather="settings" class="me-2"></i>
+                    Test WhatsApp Bot
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="whatsappTestForm">
+                    <div class="mb-3">
+                        <label for="testPhoneNumber" class="form-label">Test Phone Number</label>
+                        <input type="tel" class="form-control" id="testPhoneNumber" 
+                               placeholder="+1234567890" value="+1234567890">
+                        <div class="form-text">Include country code (e.g., +1 for US)</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="testMessage" class="form-label">Test Message</label>
+                        <textarea class="form-control" id="testMessage" rows="3" readonly>🔥 Fire Emergency System Test
+
+This is a test of the WhatsApp fire reporting system.
+
+Type "start" to begin fire emergency reporting.
+
+For real emergencies, always call 911 first!</textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i data-feather="send" class="me-2"></i>
+                        Send Test Message
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i data-feather="info" class="me-2"></i>
+                    Setup Instructions
+                </h5>
+            </div>
+            <div class="card-body">
+                <h6>Twilio WhatsApp Setup:</h6>
+                <ol class="small">
+                    <li class="mb-2">
+                        <strong>Twilio Console:</strong>
+                        <br>Go to Twilio Console → Messaging → Try it out → Send a WhatsApp message
+                    </li>
+                    <li class="mb-2">
+                        <strong>Sandbox Setup:</strong>
+                        <br>Follow instructions to connect your WhatsApp number to the sandbox
+                    </li>
+                    <li class="mb-2">
+                        <strong>Webhook Configuration:</strong>
+                        <br>Set webhook URL to: <code id="webhook-url">https://your-domain.replit.app/webhook/whatsapp</code>
+                    </li>
+                    <li class="mb-2">
+                        <strong>Test Connection:</strong>
+                        <br>Send "join [sandbox-phrase]" to the Twilio WhatsApp number
+                    </li>
+                </ol>
+                
+                <div class="alert alert-info small mt-3">
+                    <strong>Note:</strong> For production use, you'll need to request WhatsApp Business API approval from Twilio.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -2rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    top: 5px;
+}
+
+.timeline-content {
+    padding-left: 1rem;
+}
+
+.chat-demo .message-user {
+    text-align: right;
+}
+
+.chat-demo .message-user .bg-primary {
+    display: inline-block;
+    max-width: 80%;
+}
+
+.chat-demo .message-bot .bg-light {
+    display: inline-block;
+    max-width: 80%;
+}
+</style>
+
+<script>
+// Update webhook URL with current domain
+document.addEventListener('DOMContentLoaded', function() {
+    const webhookUrl = document.getElementById('webhook-url');
+    if (webhookUrl) {
+        webhookUrl.textContent = `${window.location.origin}/webhook/whatsapp`;
+    }
+    
+    // Load recent WhatsApp reports
+    loadWhatsAppReports();
+});
+
+// Test WhatsApp bot
+document.getElementById('whatsappTestForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    testWhatsAppBot();
+});
+
+function testWhatsAppBot() {
+    const phoneNumber = document.getElementById('testPhoneNumber').value;
+    const btn = document.querySelector('#whatsappTestForm button[type="submit"]');
+    const originalText = btn.innerHTML;
+    
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Sending...';
+    btn.disabled = true;
+    
+    fetch('/api/whatsapp/test', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            phone_number: phoneNumber
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(`Test message sent to ${phoneNumber}`, 'success');
+        } else {
+            showAlert('Failed to send test message: ' + data.error, 'danger');
+        }
+    })
+    .catch(error => {
+        showAlert('Error sending test message', 'danger');
+        console.error('Error:', error);
+    })
+    .finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    });
+}
+
+function loadWhatsAppReports() {
+    fetch('/api/alerts?limit=20')
+        .then(response => response.json())
+        .then(alerts => {
+            const whatsappReports = alerts.filter(alert => 
+                alert.title === 'WhatsApp Fire Report' || 
+                alert.type === 'community_report'
+            );
+            
+            displayWhatsAppReports(whatsappReports);
+        })
+        .catch(error => {
+            console.error('Error loading WhatsApp reports:', error);
+        });
+}
+
+function displayWhatsAppReports(reports) {
+    const container = document.getElementById('whatsapp-reports-container');
+    
+    if (reports.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i data-feather="message-circle" width="48" height="48" class="text-muted mb-3"></i>
+                <h5>No WhatsApp Reports Yet</h5>
+                <p class="text-muted">When community members report fires via WhatsApp, they will appear here.</p>
+            </div>
+        `;
+        feather.replace();
+        return;
+    }
+    
+    const reportsHTML = reports.map(report => `
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h6 class="card-title">${escapeHtml(report.title)}</h6>
+                        <p class="card-text">${escapeHtml(report.description || 'No description')}</p>
+                        <small class="text-muted">
+                            <i data-feather="clock" width="14" height="14" class="me-1"></i>
+                            ${new Date(report.created_at).toLocaleString()}
+                            ${report.address ? `| <i data-feather="map-pin" width="14" height="14" class="ms-2 me-1"></i>${escapeHtml(report.address)}` : ''}
+                        </small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <span class="badge bg-${getSeverityColor(report.severity)} mb-2">
+                            ${report.severity.charAt(0).toUpperCase() + report.severity.slice(1)}
+                        </span>
+                        <br>
+                        <span class="badge bg-${getStatusColor(report.status)}">
+                            ${report.status.replace('_', ' ').split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                        </span>
+                        <br>
+                        <small class="text-muted">
+                            <i data-feather="message-circle" width="14" height="14" class="me-1"></i>
+                            WhatsApp Report
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = reportsHTML;
+    feather.replace();
+}
+
+function refreshWhatsAppReports() {
+    loadWhatsAppReports();
+    showAlert('WhatsApp reports refreshed', 'info');
+}
+
+function getSeverityColor(severity) {
+    const colors = {
+        'critical': 'danger',
+        'high': 'warning',
+        'medium': 'info',
+        'low': 'success'
+    };
+    return colors[severity] || 'secondary';
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'active': 'danger',
+        'resolved': 'success',
+        'false_alarm': 'secondary'
+    };
+    return colors[status] || 'secondary';
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
+{% endblock %}

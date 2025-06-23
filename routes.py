@@ -72,6 +72,11 @@ def report_fire():
     """Community fire reporting form"""
     return render_template('report_fire.html')
 
+@app.route('/whatsapp-bot')
+def whatsapp_bot():
+    """WhatsApp bot management page"""
+    return render_template('whatsapp_bot.html')
+
 @app.route('/api/report-fire', methods=['POST'])
 def api_report_fire():
     """API endpoint for community fire reports"""

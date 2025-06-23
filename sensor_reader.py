@@ -1,4 +1,24 @@
-import serial
+try:
+    import serial
+except ImportError:
+    # Mock serial module for environments without hardware
+    class MockSerial:
+        def __init__(self, *args, **kwargs):
+            pass
+        def readline(self):
+            return b""
+        def close(self):
+            pass
+        @property
+        def in_waiting(self):
+            return 0
+    
+    class MockSerialModule:
+        Serial = MockSerial
+        class SerialException(Exception):
+            pass
+    
+    serial = MockSerialModule()
 import json
 import time
 import logging
