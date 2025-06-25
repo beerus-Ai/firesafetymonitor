@@ -111,7 +111,7 @@ def determine_severity_from_message(message):
     # Default to medium
     return "medium"
 
-def process_whatsapp_message(from_number, message_body):
+def process_whatsapp_message(from_number, message_body, is_location_share=False):
     """Process incoming WhatsApp message and handle fire reporting conversation"""
 
     # Clean phone number
@@ -199,6 +199,36 @@ Type "fire" to report an emergency now."""
 Or type "fire" to report immediately."""
 
     elif session.step == "location":
+        # Handle WhatsApp location sharing
+        if is_location_share:
+            # Parse coordinates from shared location
+            coord_pattern = r'(-?\d+\.?\d*),\s*(-?\d+\.?\d*)'
+            coord_match = re.search(coord_pattern, message_body)
+            
+            if coord_match:
+                try:
+                    lat = float(coord_match.group(1))
+                    lng = float(coord_match.group(2))
+                    if -90 <= lat <= 90 and -180 <= lng <= 180:
+                        session.data["location"] = {"latitude": lat, "longitude": lng, "type": "coordinates"}
+                        session.step = "description"
+                        
+                        return """✅ *Location Received!*
+
+📍 Your live location has been captured successfully.
+
+🔥 *Now describe the fire:*
+- Size of the fire (small, medium, large)
+- What's burning (building, car, etc.)
+- Color of smoke
+- Are people in danger?
+- Any other important details
+
+Be as specific as possible to help emergency responders."""
+                except ValueError:
+                    pass
+        
+        # Handle text-based location input
         location_info = parse_location_from_message(message_body)
 
         if location_info:
@@ -221,7 +251,7 @@ Be as specific as possible to help emergency responders."""
 
 📝 Send coordinates: 40.7128, -74.0060
 🏠 Send address: 123 Main Street, City
-📍 Or share your location if you're at the fire site"""
+📍 Or share your live location using the 📎 attachment button → Location"""
 
     elif session.step == "description":
         session.data["description"] = message_body
@@ -356,11 +386,28 @@ def whatsapp_webhook():
         # Get message data from Twilio
         from_number = request.form.get('From', '')
         message_body = request.form.get('Body', '').strip()
-
+        
+        # Check for WhatsApp location sharing
+        latitude = request.form.get('Latitude')
+        longitude = request.form.get('Longitude')
+        
         logger.info(f"Received WhatsApp message from {from_number}: {message_body}")
+        if latitude and longitude:
+            logger.info(f"Location shared: {latitude}, {longitude}")
 
-        # Process the message
-        response_text = process_whatsapp_message(from_number, message_body)
+        # Handle location sharing
+        if latitude and longitude:
+            try:
+                lat = float(latitude)
+                lng = float(longitude)
+                location_message = f"{lat}, {lng}"
+                response_text = process_whatsapp_message(from_number, location_message, is_location_share=True)
+            except ValueError:
+                logger.error(f"Invalid location coordinates: {latitude}, {longitude}")
+                response_text = process_whatsapp_message(from_number, message_body)
+        else:
+            # Process regular text message
+            response_text = process_whatsapp_message(from_number, message_body)
 
         # Create Twilio response
         response = MessagingResponse()
