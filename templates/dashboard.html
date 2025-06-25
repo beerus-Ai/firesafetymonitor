@@ -600,6 +600,7 @@ Generated on: ${reportData.generated_at}
                                 <small>
                                     <span class="badge bg-${severityClass}">${alert.severity.toUpperCase()}</span>
                                     ${alert.address ? `<i data-feather="map-pin" width="12" height="12"></i> ${alert.address}` : ''}
+                                    ${alert.latitude && alert.longitude ? `<a href="https://www.google.com/maps?q=${alert.latitude},${alert.longitude}" target="_blank" class="text-decoration-none ms-2"><i data-feather="external-link" width="12" height="12"></i> Map</a>` : ''}
                                 </small>
                                 <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); showAlertDetails(${alert.id})">
                                     View Details

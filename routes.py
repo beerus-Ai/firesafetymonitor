@@ -211,6 +211,14 @@ def get_alerts():
     
     alert_data = []
     for alert in alerts:
+        # Handle image_urls safely
+        image_urls = []
+        try:
+            if hasattr(alert, 'image_urls') and alert.image_urls:
+                image_urls = alert.image_urls.split(',')
+        except:
+            image_urls = []
+
         alert_info = {
             'id': alert.id,
             'title': alert.title,
@@ -224,7 +232,9 @@ def get_alerts():
             'created_at': alert.created_at.isoformat(),
             'resolved_at': alert.resolved_at.isoformat() if alert.resolved_at else None,
             'sensor_reading': alert.sensor_reading,
-            'sensor_name': alert.sensor.name if alert.sensor else None
+            'sensor_name': alert.sensor.name if alert.sensor else None,
+            'image_urls': image_urls,
+            'google_maps_link': f"https://www.google.com/maps?q={alert.latitude},{alert.longitude}"
         }
         alert_data.append(alert_info)
     
@@ -289,6 +299,14 @@ def get_alert_details(alert_id):
     try:
         alert = Alert.query.get_or_404(alert_id)
         
+        # Handle image_urls safely
+        image_urls = []
+        try:
+            if hasattr(alert, 'image_urls') and alert.image_urls:
+                image_urls = alert.image_urls.split(',')
+        except:
+            image_urls = []
+
         alert_info = {
             'id': alert.id,
             'title': alert.title,
@@ -306,7 +324,8 @@ def get_alert_details(alert_id):
             'reporter_name': alert.reporter_name,
             'reporter_phone': alert.reporter_phone,
             'reporter_email': alert.reporter_email,
-            'image_urls': alert.image_urls
+            'image_urls': image_urls,
+            'google_maps_link': f"https://www.google.com/maps?q={alert.latitude},{alert.longitude}"
         }
         
         return jsonify(alert_info)

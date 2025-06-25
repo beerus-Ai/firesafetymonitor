@@ -119,7 +119,11 @@
                                         {% endif %}
                                         {% if alert.latitude and alert.longitude %}
                                             <small class="text-muted">
-                                                {{ alert.latitude|round(4) }}, {{ alert.longitude|round(4) }}
+                                                <a href="https://www.google.com/maps?q={{ alert.latitude }},{{ alert.longitude }}" 
+                                                   target="_blank" class="text-decoration-none">
+                                                    <i data-feather="map-pin" width="12" height="12"></i>
+                                                    {{ alert.latitude|round(4) }}, {{ alert.longitude|round(4) }}
+                                                </a>
                                             </small>
                                         {% endif %}
                                     </td>
@@ -312,7 +316,7 @@
                                 <div class="col-12">
                                     <h6>Images</h6>
                                     <div class="d-flex flex-wrap">
-                                        ${alert.image_urls.map(url => `<img src="${url}" class="img-thumbnail me-2" style="max-height: 100px;">`).join('')}
+                                        ${alert.image_urls.map(url => `<img src="${url.trim()}" class="img-thumbnail me-2" style="max-height: 100px; cursor: pointer;" onclick="window.open('${url.trim()}', '_blank')">`).join('')}
                                     </div>
                                 </div>
                             </div>
@@ -336,7 +340,15 @@
                                 <h6>Location</h6>
                                 <table class="table table-sm">
                                     ${alert.address ? `<tr><td><strong>Address:</strong></td><td>${alert.address}</td></tr>` : ''}
-                                    <tr><td><strong>Coordinates:</strong></td><td>${alert.latitude.toFixed(6)}, ${alert.longitude.toFixed(6)}</td></tr>
+                                    <tr>
+                                        <td><strong>Coordinates:</strong></td>
+                                        <td>
+                                            <a href="https://www.google.com/maps?q=${alert.latitude},${alert.longitude}" target="_blank" class="text-decoration-none">
+                                                <i data-feather="map-pin" width="16" height="16"></i>
+                                                ${alert.latitude.toFixed(6)}, ${alert.longitude.toFixed(6)}
+                                            </a>
+                                        </td>
+                                    </tr>
                                     ${alert.sensor_reading ? `<tr><td><strong>Sensor Reading:</strong></td><td>${alert.sensor_reading}</td></tr>` : ''}
                                     ${alert.sensor_name ? `<tr><td><strong>Sensor:</strong></td><td>${alert.sensor_name}</td></tr>` : ''}
                                 </table>

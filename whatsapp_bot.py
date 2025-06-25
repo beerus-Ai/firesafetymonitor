@@ -321,13 +321,16 @@ Or type "skip" to submit the report anonymously."""
 📱 SMS alerts sent to fire department
 📍 Location confirmed and logged
 
+📍 *Your exact location:*
+https://www.google.com/maps?q={location}
+
 **IMPORTANT:** If this is an active emergency, please also CALL 911 immediately.
 
 You will receive updates from emergency responders about their response time and arrival.
 
 Thank you for using our fire reporting system. Stay safe!
 
-Type "start" to report another emergency.""".replace("{alert_id}", str(alert_created))
+Type "start" to report another emergency.""".replace("{alert_id}", str(alert_created)).replace("{location}", f"{session.data['location'].get('latitude', 0)},{session.data['location'].get('longitude', 0)}")
 
             else:
                 session.reset()
