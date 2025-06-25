@@ -59,6 +59,9 @@ class Alert(db.Model):
     reporter_name = db.Column(db.String(100))
     reporter_phone = db.Column(db.String(20))
     reporter_email = db.Column(db.String(100))
+    
+    # Media fields
+    image_urls = db.Column(db.Text)  # Comma-separated URLs
 
 class SensorReading(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -76,3 +79,14 @@ class EmergencyContact(db.Model):
     role = db.Column(db.String(50), default='responder')  # responder, admin, observer
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class AdminResponse(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    alert_id = db.Column(db.Integer, db.ForeignKey('alert.id'), nullable=False)
+    admin_name = db.Column(db.String(100), nullable=False)
+    response_message = db.Column(db.Text, nullable=False)
+    estimated_arrival_time = db.Column(db.String(50))  # e.g., "5-10 minutes"
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    sent_to_whatsapp = db.Column(db.Boolean, default=False)
+    
+    alert = db.relationship('Alert', backref='admin_responses')

@@ -282,6 +282,142 @@ def get_fire_stations():
         logger.error(f"Error finding fire stations: {e}")
         return jsonify({'error': 'Fire station service unavailable'}), 500
 
+@app.route('/api/alerts/<int:alert_id>')
+@login_required
+def get_alert_details(alert_id):
+    """Get detailed information for a specific alert"""
+    try:
+        alert = Alert.query.get_or_404(alert_id)
+        
+        alert_info = {
+            'id': alert.id,
+            'title': alert.title,
+            'description': alert.description,
+            'type': alert.alert_type.value,
+            'status': alert.status.value,
+            'severity': alert.severity,
+            'latitude': alert.latitude,
+            'longitude': alert.longitude,
+            'address': alert.address,
+            'created_at': alert.created_at.isoformat(),
+            'resolved_at': alert.resolved_at.isoformat() if alert.resolved_at else None,
+            'sensor_reading': alert.sensor_reading,
+            'sensor_name': alert.sensor.name if alert.sensor else None,
+            'reporter_name': alert.reporter_name,
+            'reporter_phone': alert.reporter_phone,
+            'reporter_email': alert.reporter_email,
+            'image_urls': alert.image_urls
+        }
+        
+        return jsonify(alert_info)
+        
+    except Exception as e:
+        logger.error(f"Error getting alert details {alert_id}: {e}")
+        return jsonify({'error': 'Failed to get alert details'}), 500
+
+@app.route('/api/alerts/<int:alert_id>/responses')
+@login_required
+def get_alert_responses(alert_id):
+    """Get admin responses for a specific alert"""
+    try:
+        from models import AdminResponse
+        
+        responses = AdminResponse.query.filter_by(alert_id=alert_id)\
+                                      .order_by(AdminResponse.created_at.desc()).all()
+        
+        response_data = []
+        for response in responses:
+            response_info = {
+                'id': response.id,
+                'admin_name': response.admin_name,
+                'response_message': response.response_message,
+                'estimated_arrival_time': response.estimated_arrival_time,
+                'created_at': response.created_at.isoformat(),
+                'sent_to_whatsapp': response.sent_to_whatsapp
+            }
+            response_data.append(response_info)
+        
+        return jsonify(response_data)
+        
+    except Exception as e:
+        logger.error(f"Error getting alert responses {alert_id}: {e}")
+        return jsonify({'error': 'Failed to get alert responses'}), 500
+
+@app.route('/api/admin-response', methods=['POST'])
+@login_required
+def send_admin_response():
+    """Send admin response to alert reporter via WhatsApp"""
+    try:
+        from models import AdminResponse
+        from whatsapp_bot import send_whatsapp_message
+        
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['alert_id', 'admin_name', 'response_message']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        # Get alert
+        alert = Alert.query.get_or_404(data['alert_id'])
+        
+        if not alert.reporter_phone:
+            return jsonify({'error': 'No reporter phone number available'}), 400
+        
+        # Create admin response record
+        admin_response = AdminResponse(
+            alert_id=data['alert_id'],
+            admin_name=data['admin_name'],
+            response_message=data['response_message'],
+            estimated_arrival_time=data.get('estimated_arrival_time')
+        )
+        
+        db.session.add(admin_response)
+        db.session.commit()
+        
+        # Prepare WhatsApp message
+        message = f"""🚨 *Emergency Response Update*
+
+Alert ID: #{alert.id}
+
+👤 **From:** {data['admin_name']}
+
+📝 **Message:** {data['response_message']}"""
+
+        if data.get('estimated_arrival_time') and data.get('include_arrival_time'):
+            message += f"""
+
+⏰ **Estimated Arrival:** {data['estimated_arrival_time']}"""
+
+        message += """
+
+🚑 Emergency responders are on their way. Please stay safe and follow any safety instructions.
+
+For immediate emergency assistance, call 911."""
+        
+        # Send WhatsApp message
+        phone_number = alert.reporter_phone.replace('whatsapp:', '')
+        success = send_whatsapp_message(phone_number, message)
+        
+        if success:
+            admin_response.sent_to_whatsapp = True
+            db.session.commit()
+            logger.info(f"Admin response sent to {phone_number} for alert {alert.id}")
+        else:
+            logger.error(f"Failed to send admin response to {phone_number} for alert {alert.id}")
+        
+        return jsonify({
+            'success': success,
+            'message': 'Response sent successfully' if success else 'Failed to send WhatsApp message',
+            'response_id': admin_response.id
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error sending admin response: {e}")
+        return jsonify({'error': 'Failed to send admin response'}), 500
+
 # Error handlers
 @app.errorhandler(404)
 def not_found_error(error):

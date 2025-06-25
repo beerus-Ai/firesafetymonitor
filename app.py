@@ -32,6 +32,14 @@ with app.app_context():
     # Import models to ensure tables are created
     import models  # noqa: F401
     db.create_all()
+    
+    # Create sample admin response data if needed
+    from models import AdminResponse
+    try:
+        # This will ensure the AdminResponse table exists
+        AdminResponse.query.first()
+    except Exception as e:
+        db.create_all()  # Recreate tables if there's an issue
 
 # Import routes, WhatsApp bot, and admin authentication
 import routes  # noqa: F401

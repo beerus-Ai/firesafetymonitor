@@ -193,12 +193,12 @@
     function clearFilters() {
         window.location.href = '{{ url_for("alerts") }}';
     }
-    
+
     // Refresh alerts
     function refreshAlerts() {
         location.reload();
     }
-    
+
     // Resolve alert
     function resolveAlert(alertId) {
         if (confirm('Are you sure you want to resolve this alert?')) {
@@ -215,7 +215,7 @@
                         const statusBadge = row.querySelector('td:nth-child(3) .badge');
                         statusBadge.textContent = 'Resolved';
                         statusBadge.className = 'badge bg-success';
-                        
+
                         // Remove action buttons
                         const actionButtons = row.querySelector('.btn-group');
                         actionButtons.innerHTML = `
@@ -237,7 +237,7 @@
             });
         }
     }
-    
+
     // Mark as false alarm
     function markFalseAlarm(alertId) {
         if (confirm('Are you sure this is a false alarm?')) {
@@ -245,36 +245,36 @@
             showAlert('False alarm functionality not yet implemented', 'warning');
         }
     }
-    
+
     // Get navigation to alert
     function getNavigation(alertId) {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 position => {
                     const location = `${position.coords.latitude},${position.coords.longitude}`;
-                    
+
                     fetch(`/api/alerts/${alertId}/navigation?location=${location}`)
                         .then(response => response.json())
                         .then(data => {
                             if (data.route_to_alert) {
                                 const route = data.route_to_alert;
                                 const alertInfo = data.alert;
-                                
+
                                 let message = `Navigation to Alert: ${alertInfo.title}\n\n`;
                                 message += `Destination: ${route.end_address}\n`;
                                 message += `Distance: ${route.distance}\n`;
                                 message += `Duration: ${route.duration}\n`;
-                                
+
                                 if (route.duration_in_traffic) {
                                     message += `Duration in Traffic: ${route.duration_in_traffic}\n`;
                                 }
-                                
+
                                 if (data.nearest_fire_stations && data.nearest_fire_stations.length > 0) {
                                     message += `\nNearest Fire Station: ${data.nearest_fire_stations[0].name}`;
                                 }
-                                
+
                                 alert(message);
-                                
+
                                 // Optionally open in Google Maps
                                 if (confirm('Open navigation in Google Maps?')) {
                                     const mapsUrl = `https://www.google.com/maps/dir/${position.coords.latitude},${position.coords.longitude}/${alertInfo.latitude},${alertInfo.longitude}`;
@@ -296,7 +296,7 @@
             showAlert('Geolocation is not supported by this browser', 'warning');
         }
     }
-    
+
     // View alert details
     function viewAlertDetails(alertId) {
         fetch(`/api/alerts`)
@@ -305,6 +305,20 @@
                 const alert = alerts.find(a => a.id === alertId);
                 if (alert) {
                     const modalContent = document.getElementById('alertDetailsContent');
+                    let imageGallery = '';
+                    if (alert.image_urls && alert.image_urls.length > 0) {
+                        imageGallery = `
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <h6>Images</h6>
+                                    <div class="d-flex flex-wrap">
+                                        ${alert.image_urls.map(url => `<img src="${url}" class="img-thumbnail me-2" style="max-height: 100px;">`).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+
                     modalContent.innerHTML = `
                         <div class="row">
                             <div class="col-md-6">
@@ -336,8 +350,9 @@
                                 </div>
                             </div>
                         ` : ''}
+                        ${imageGallery}
                     `;
-                    
+
                     const modal = new bootstrap.Modal(document.getElementById('alertDetailsModal'));
                     modal.show();
                 } else {

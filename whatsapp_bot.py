@@ -10,6 +10,8 @@ from notifier import send_alert_notifications
 from gps_navigator import geocode_address, reverse_geocode
 import re
 import threading
+import requests
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -32,10 +34,12 @@ class FireReportSession:
         self.step = "initial"
         self.data = {}
         self.last_activity = None
+        self.alert_id = None
 
     def reset(self):
         self.step = "initial"
         self.data = {}
+        self.alert_id = None
 
 def send_whatsapp_message(to_number, message):
     """Send WhatsApp message using Twilio"""
@@ -256,9 +260,35 @@ Be as specific as possible to help emergency responders."""
     elif session.step == "description":
         session.data["description"] = message_body
         session.data["severity"] = determine_severity_from_message(message_body)
-        session.step = "contact_info"
+        session.step = "image_upload"
 
-        return """👤 *Your Contact Information (Optional)*
+        return """📸 *Upload Image (Optional)*
+
+If possible, please share a photo of the fire scene to help emergency responders assess the situation better.
+
+📎 Use the attachment button to upload an image
+📝 Or type "skip" to continue without an image
+
+*Images help responders prepare the right equipment and personnel.*"""
+
+    elif session.step == "image_upload":
+        if message_lower == "skip":
+            session.step = "contact_info"
+            return """👤 *Your Contact Information (Optional)*
+
+Please provide your name and phone number so emergency responders can contact you if needed:
+
+Example: "John Smith, +1234567890"
+
+Or type "skip" to submit the report anonymously."""
+        else:
+            # Handle image upload (will be processed in webhook)
+            session.step = "contact_info"
+            return """✅ *Image Received!*
+
+Thank you for providing the image. This will help emergency responders.
+
+👤 *Your Contact Information (Optional)*
 
 Please provide your name and phone number so emergency responders can contact you if needed:
 
@@ -282,6 +312,7 @@ Or type "skip" to submit the report anonymously."""
             alert_created = create_fire_alert_from_whatsapp(session.data, phone_number)
 
             if alert_created:
+                session.alert_id = alert_created
                 session.reset()
                 return """✅ *Fire Report Submitted Successfully!*
 
@@ -291,6 +322,8 @@ Or type "skip" to submit the report anonymously."""
 📍 Location confirmed and logged
 
 **IMPORTANT:** If this is an active emergency, please also CALL 911 immediately.
+
+You will receive updates from emergency responders about their response time and arrival.
 
 Thank you for using our fire reporting system. Stay safe!
 
@@ -361,7 +394,8 @@ def create_fire_alert_from_whatsapp(session_data, reporter_phone):
                 address=address,
                 reporter_name=session_data.get("reporter_name"),
                 reporter_phone=session_data.get("reporter_phone", reporter_phone),
-                reporter_email=None
+                reporter_email=None,
+                image_urls=','.join(session_data.get("image_urls", []))
             )
 
             db.session.add(alert)
@@ -391,12 +425,48 @@ def whatsapp_webhook():
         latitude = request.form.get('Latitude')
         longitude = request.form.get('Longitude')
         
+        # Check for media (images)
+        num_media = int(request.form.get('NumMedia', 0))
+        media_urls = []
+        if num_media > 0:
+            for i in range(num_media):
+                media_url = request.form.get(f'MediaUrl{i}')
+                media_type = request.form.get(f'MediaContentType{i}')
+                if media_url and media_type and media_type.startswith('image/'):
+                    media_urls.append(media_url)
+        
         logger.info(f"Received WhatsApp message from {from_number}: {message_body}")
         if latitude and longitude:
             logger.info(f"Location shared: {latitude}, {longitude}")
+        if media_urls:
+            logger.info(f"Media received: {len(media_urls)} images")
 
+        # Handle media upload
+        if media_urls:
+            phone_number = from_number.replace("whatsapp:", "")
+            if phone_number in user_sessions:
+                session = user_sessions[phone_number]
+                if session.step == "image_upload":
+                    # Store image URLs in session data
+                    session.data["image_urls"] = media_urls
+                    session.step = "contact_info"
+                    response_text = """✅ *Image Received!*
+
+Thank you for providing the image. This will help emergency responders.
+
+👤 *Your Contact Information (Optional)*
+
+Please provide your name and phone number so emergency responders can contact you if needed:
+
+Example: "John Smith, +1234567890"
+
+Or type "skip" to submit the report anonymously."""
+                else:
+                    response_text = process_whatsapp_message(from_number, message_body)
+            else:
+                response_text = process_whatsapp_message(from_number, message_body)
         # Handle location sharing
-        if latitude and longitude:
+        elif latitude and longitude:
             try:
                 lat = float(latitude)
                 lng = float(longitude)
