@@ -17,56 +17,78 @@
     {% block head %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i data-feather="shield" class="me-2"></i>
-                Fire Response System
-            </a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-danger">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="{{ url_for('index') }}">
+                    <i data-feather="shield"></i>
+                    Fire Response System
+                </a>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
 
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('index') }}">
-                            <i data-feather="home" class="me-1"></i>Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('alerts') }}">
-                            <i data-feather="alert-triangle" class="me-1"></i>Alerts
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('dashboard') }}">
-                            <i data-feather="bar-chart-2" class="me-1"></i>Analytics
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('report_fire') }}">
-                            <i data-feather="phone" class="me-1"></i>Report Fire
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/whatsapp-bot">
-                            <i data-feather="message-circle" class="me-1"></i>WhatsApp Bot
-                        </a>
-                    </li>
-                </ul>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav me-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('index') }}">
+                                <i data-feather="home" width="16" height="16"></i>
+                                Home
+                            </a>
+                        </li>
+                        {% if session.admin_logged_in %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('dashboard') }}">
+                                <i data-feather="bar-chart-2" width="16" height="16"></i>
+                                Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('alerts') }}">
+                                <i data-feather="alert-triangle" width="16" height="16"></i>
+                                Alerts
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('report_fire') }}">
+                                <i data-feather="phone" width="16" height="16"></i>
+                                Report Fire
+                            </a>
+                        </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('whatsapp_bot') }}">
+                                <i data-feather="message-circle" width="16" height="16"></i>
+                                WhatsApp Bot
+                            </a>
+                        </li>
+                    </ul>
 
-                <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <button class="btn btn-outline-warning" onclick="testNotifications()">
-                            <i data-feather="bell" class="me-1"></i>Test Alerts
-                        </button>
-                    </li>
-                </ul>
+                    <ul class="navbar-nav">
+                        {% if session.admin_logged_in %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
+                                <i data-feather="user" width="16" height="16"></i>
+                                Admin
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ url_for('change_admin_password') }}">Change Password</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('admin_logout') }}">Logout</a></li>
+                            </ul>
+                        </li>
+                        {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('admin_login') }}">
+                                <i data-feather="log-in" width="16" height="16"></i>
+                                Admin Login
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
             </div>
-        </div>
-    </nav>
+        </nav>
 
     <main class="container my-4">
         <!-- Flash messages -->

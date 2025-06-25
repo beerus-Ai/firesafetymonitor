@@ -56,28 +56,61 @@
 <!-- Recent Alerts -->
 <div class="row mb-4">
     <div class="col-lg-8">
-                {% if not session.admin_logged_in %}
+                {% if session.admin_logged_in %}
+                <!-- Admin Dashboard Content -->
                 <div class="card border-info mb-4">
                     <div class="card-header bg-info text-white">
                         <h5 class="mb-0">
-                            <i data-feather="smartphone" class="me-2"></i>
-                            Community Fire Reporting
+                            <i data-feather="shield" class="me-2"></i>
+                            Admin Dashboard
                         </h5>
                     </div>
                     <div class="card-body">
-                        <p class="card-text">Report fires easily through WhatsApp or our web form. No registration required!</p>
+                        <p class="card-text">Welcome back, Administrator! Access full system controls and analytics.</p>
                         <div class="row">
                             <div class="col-md-6">
-                                <a href="{{ url_for('whatsapp_bot') }}" class="btn btn-success w-100 mb-2">
-                                    <i data-feather="message-circle" class="me-2"></i>
-                                    WhatsApp Bot
+                                <a href="{{ url_for('dashboard') }}" class="btn btn-primary w-100 mb-2">
+                                    <i data-feather="bar-chart-2" class="me-2"></i>
+                                    Full Dashboard
                                 </a>
                             </div>
                             <div class="col-md-6">
-                                <a href="{{ url_for('report_fire') }}" class="btn btn-danger w-100 mb-2">
-                                    <i data-feather="phone" class="me-2"></i>
-                                    Web Report Form
+                                <a href="{{ url_for('alerts') }}" class="btn btn-warning w-100 mb-2">
+                                    <i data-feather="alert-triangle" class="me-2"></i>
+                                    Manage Alerts
                                 </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Community User Content -->
+                <div class="card border-success mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i data-feather="smartphone" class="me-2"></i>
+                            🚨 Report Fire Emergency
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text"><strong>For immediate fire emergencies:</strong></p>
+                        <div class="alert alert-danger">
+                            <h6><i data-feather="phone" class="me-2"></i>CALL 911 FIRST!</h6>
+                            <p class="mb-0">Then use our WhatsApp bot for additional coordination and tracking.</p>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <a href="{{ url_for('whatsapp_bot') }}" class="btn btn-success w-100 mb-3 btn-lg">
+                                    <i data-feather="message-circle" class="me-2"></i>
+                                    🔥 Report Fire via WhatsApp
+                                </a>
+                                <p class="text-center text-muted">
+                                    <small>
+                                        <i data-feather="check" class="me-1"></i> No registration required<br>
+                                        <i data-feather="check" class="me-1"></i> Auto-location detection<br>
+                                        <i data-feather="check" class="me-1"></i> Real-time coordination with emergency services
+                                    </small>
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -140,10 +173,15 @@
             <div class="card-header">
                 <h5 class="mb-0">
                     <i data-feather="zap" class="me-2"></i>
-                    Quick Actions
+                    {% if session.admin_logged_in %}
+                    Admin Actions
+                    {% else %}
+                    Emergency Information
+                    {% endif %}
                 </h5>
             </div>
             <div class="card-body">
+                {% if session.admin_logged_in %}
                 <div class="d-grid gap-2">
                     <a href="{{ url_for('report_fire') }}" class="btn btn-danger">
                         <i data-feather="phone" class="me-2"></i>
@@ -162,6 +200,26 @@
                         Refresh Sensors
                     </button>
                 </div>
+                {% else %}
+                <div class="text-center">
+                    <div class="alert alert-info">
+                        <h6><i data-feather="info" class="me-2"></i>Emergency Contacts</h6>
+                        <p class="mb-1"><strong>Fire Department:</strong> 911</p>
+                        <p class="mb-1"><strong>Police:</strong> 911</p>
+                        <p class="mb-0"><strong>Ambulance:</strong> 911</p>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('whatsapp_bot') }}" class="btn btn-success">
+                            <i data-feather="message-circle" class="me-2"></i>
+                            WhatsApp Fire Report
+                        </a>
+                        <button class="btn btn-outline-info" onclick="showFireSafetyTips()">
+                            <i data-feather="shield" class="me-2"></i>
+                            Fire Safety Tips
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -418,6 +476,34 @@
     function refreshSensors() {
         updateSensorStatus();
         showAlert('Sensor status refreshed', 'info');
+    }
+
+    // Fire safety tips function
+    function showFireSafetyTips() {
+        const tips = `🛡️ FIRE SAFETY TIPS
+
+🚨 IF YOU SEE A FIRE:
+✅ Call 911 immediately
+✅ Alert others nearby
+✅ Evacuate safely and quickly
+✅ Stay low if there's smoke
+✅ Meet at designated safe area
+
+❌ DO NOT:
+❌ Use elevators during evacuation
+❌ Go back inside for belongings
+❌ Fight large fires yourself
+❌ Panic - stay calm and focused
+
+💡 PREVENTION:
+✅ Check smoke detectors monthly
+✅ Keep fire extinguishers handy
+✅ Plan and practice escape routes
+✅ Store flammable materials safely
+
+📱 Use our WhatsApp bot to report fires for emergency coordination!`;
+
+        alert(tips);
     }
 
     // Cleanup on page unload

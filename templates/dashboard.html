@@ -195,8 +195,8 @@
 {% block scripts %}
 <script>
     // Chart data preparation
-    const alerts = {{ alerts | tojsonfilter | safe }};
-    const sensors = {{ sensors | tojsonfilter | safe }};
+    const alerts = {{ alerts | tojson | safe }};
+    const sensors = {{ sensors | tojson | safe }};
     
     // Process alert data for charts
     function processAlertData() {
