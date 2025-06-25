@@ -71,13 +71,6 @@
                                 <li><a class="dropdown-item" href="{{ url_for('admin_logout') }}">Logout</a></li>
                             </ul>
                         </li>
-                        {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="#" id="adminAccess">
-                                <i data-feather="log-in" width="16" height="16"></i>
-                                Admin Login
-                            </a>
-                        </li>
                         {% endif %}
                     </ul>
                 </div>
@@ -133,34 +126,7 @@
     <script>
         feather.replace();
 
-        // 3-tap admin access
-        let tapCount = 0;
-        let tapTimer = null;
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const adminAccess = document.getElementById('adminAccess');
-            if (adminAccess) {
-                adminAccess.addEventListener('click', function() {
-                    tapCount++;
-
-                    // Clear existing timer
-                    if (tapTimer) {
-                        clearTimeout(tapTimer);
-                    }
-
-                    // Reset counter after 2 seconds
-                    tapTimer = setTimeout(function() {
-                        tapCount = 0;
-                    }, 2000);
-
-                    // Check if 3 taps reached
-                    if (tapCount >= 3) {
-                        tapCount = 0;
-                        window.location.href = '{{ url_for("admin_login") }}';
-                    }
-                });
-            }
-        });
+        
     </script>
 
     {% block scripts %}{% endblock %}
