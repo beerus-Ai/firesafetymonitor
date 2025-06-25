@@ -1,0 +1,105 @@
+
+{% extends "base.html" %}
+
+{% block title %}Admin Login - Fire Response System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white text-center">
+                <h4 class="mb-0">
+                    <i data-feather="shield" class="me-2"></i>
+                    Admin Login
+                </h4>
+            </div>
+            <div class="card-body">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i data-feather="user"></i>
+                            </span>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i data-feather="lock"></i>
+                            </span>
+                            <input type="password" class="form-control" id="password" name="password" required>
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                                <i data-feather="eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i data-feather="log-in" class="me-2"></i>
+                            Login
+                        </button>
+                    </div>
+                </form>
+                
+                <hr>
+                <div class="text-center">
+                    <a href="{{ url_for('index') }}" class="btn btn-link">
+                        <i data-feather="arrow-left" class="me-1"></i>
+                        Back to Home
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i data-feather="smartphone" class="me-2"></i>
+                    Community Users
+                </h6>
+                <p class="card-text small">
+                    Community members can report fires directly through our WhatsApp bot. 
+                    No login required - just send a message to get started!
+                </p>
+                <a href="{{ url_for('whatsapp_bot') }}" class="btn btn-success btn-sm">
+                    <i data-feather="message-circle" class="me-1"></i>
+                    WhatsApp Bot Info
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle password visibility
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        const password = document.getElementById('password');
+        const icon = this.querySelector('i');
+        
+        if (password.type === 'password') {
+            password.type = 'text';
+            icon.setAttribute('data-feather', 'eye-off');
+        } else {
+            password.type = 'password';
+            icon.setAttribute('data-feather', 'eye');
+        }
+        feather.replace();
+    });
+</script>
+{% endblock %}

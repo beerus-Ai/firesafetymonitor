@@ -1,3 +1,4 @@
+# Updated location step to encourage live location sharing
 import os
 import logging
 from flask import request, jsonify
@@ -31,7 +32,7 @@ class FireReportSession:
         self.step = "initial"
         self.data = {}
         self.last_activity = None
-    
+
     def reset(self):
         self.step = "initial"
         self.data = {}
@@ -41,7 +42,7 @@ def send_whatsapp_message(to_number, message):
     if not twilio_client:
         logger.error("Twilio client not configured for WhatsApp")
         return False
-    
+
     try:
         message = twilio_client.messages.create(
             body=message,
@@ -59,7 +60,7 @@ def parse_location_from_message(message):
     # Look for coordinates pattern (latitude, longitude)
     coord_pattern = r'(-?\d+\.?\d*),\s*(-?\d+\.?\d*)'
     coord_match = re.search(coord_pattern, message)
-    
+
     if coord_match:
         try:
             lat = float(coord_match.group(1))
@@ -68,11 +69,11 @@ def parse_location_from_message(message):
                 return {"latitude": lat, "longitude": lng, "type": "coordinates"}
         except ValueError:
             pass
-    
+
     # Look for address indicators
     address_keywords = ["at", "near", "on", "address", "location", "street", "avenue", "road", "building"]
     message_lower = message.lower()
-    
+
     for keyword in address_keywords:
         if keyword in message_lower:
             # Extract text after the keyword as potential address
@@ -81,53 +82,53 @@ def parse_location_from_message(message):
                 address = parts[1].strip()
                 if len(address) > 3:  # Reasonable address length
                     return {"address": address, "type": "address"}
-    
+
     # If no specific indicators, treat the whole message as potential address
     if len(message.strip()) > 5:
         return {"address": message.strip(), "type": "address"}
-    
+
     return None
 
 def determine_severity_from_message(message):
     """Determine fire severity from user description"""
     message_lower = message.lower()
-    
+
     # Critical severity indicators
     critical_words = ["explosion", "huge", "massive", "spreading fast", "trapped", "emergency", "help", "danger"]
     if any(word in message_lower for word in critical_words):
         return "critical"
-    
+
     # High severity indicators
     high_words = ["large", "big", "growing", "smoke everywhere", "multiple", "building"]
     if any(word in message_lower for word in high_words):
         return "high"
-    
+
     # Low severity indicators
     low_words = ["small", "contained", "minor", "little", "under control"]
     if any(word in message_lower for word in low_words):
         return "low"
-    
+
     # Default to medium
     return "medium"
 
 def process_whatsapp_message(from_number, message_body):
     """Process incoming WhatsApp message and handle fire reporting conversation"""
-    
+
     # Clean phone number
     phone_number = from_number.replace("whatsapp:", "")
-    
+
     # Get or create user session
     if phone_number not in user_sessions:
         user_sessions[phone_number] = FireReportSession(phone_number)
-    
+
     session = user_sessions[phone_number]
     message_lower = message_body.lower().strip()
-    
+
     # Handle commands that reset session
     if message_lower in ["start", "begin", "report fire", "fire", "emergency", "help"]:
         session.reset()
         session.step = "greeting"
-        
+
         response = """🚨 *Fire Emergency Reporting System*
 
 I'm here to help you report a fire emergency quickly and efficiently.
@@ -138,23 +139,28 @@ Please choose an option:
 3️⃣ Get fire safety tips
 
 Type the number of your choice or say "fire" to report immediately."""
-        
+
         return response
-    
+
     # Handle main conversation flow
     if session.step == "initial" or session.step == "greeting":
         if message_lower in ["1", "fire", "report", "emergency"]:
             session.step = "location"
             return """📍 *Location Information Needed*
 
-Please provide the fire location in one of these ways:
+**PREFERRED:** 🗺️ Share your live location by:
+1. Tap the 📎 attachment button
+2. Select "Location" 
+3. Choose "Share Live Location" or "Send Your Current Location"
 
-🗺️ Share your current location (if you're at the fire)
+**OR provide location by:**
 📝 Send coordinates: latitude, longitude (e.g., 40.7128, -74.0060)
 🏠 Describe the address or nearby landmarks
 
-Example: "123 Main Street" or "Near Central Park entrance" """
-        
+Example: "123 Main Street" or "Near Central Park entrance"
+
+*Live location sharing gives emergency responders the most accurate location data!*"""
+
         elif message_lower in ["2", "contact", "contacts"]:
             return """📞 *Emergency Contacts*
 
@@ -165,7 +171,7 @@ Example: "123 Main Street" or "Near Central Park entrance" """
 👮 Police: 911
 
 💬 You can also continue reporting through this WhatsApp bot for additional coordination."""
-        
+
         elif message_lower in ["3", "safety", "tips"]:
             return """🛡️ *Fire Safety Tips*
 
@@ -183,7 +189,7 @@ Example: "123 Main Street" or "Near Central Park entrance" """
 ❌ Panic
 
 Type "fire" to report an emergency now."""
-        
+
         else:
             return """Please choose an option:
 1️⃣ Report fire emergency
@@ -191,14 +197,14 @@ Type "fire" to report an emergency now."""
 3️⃣ Fire safety tips
 
 Or type "fire" to report immediately."""
-    
+
     elif session.step == "location":
         location_info = parse_location_from_message(message_body)
-        
+
         if location_info:
             session.data["location"] = location_info
             session.step = "description"
-            
+
             return """🔥 *Describe the Fire*
 
 Please describe what you see:
@@ -209,19 +215,19 @@ Please describe what you see:
 - Any other important details
 
 Be as specific as possible to help emergency responders."""
-        
+
         else:
             return """❌ I couldn't understand the location. Please try again:
 
 📝 Send coordinates: 40.7128, -74.0060
 🏠 Send address: 123 Main Street, City
 📍 Or share your location if you're at the fire site"""
-    
+
     elif session.step == "description":
         session.data["description"] = message_body
         session.data["severity"] = determine_severity_from_message(message_body)
         session.step = "contact_info"
-        
+
         return """👤 *Your Contact Information (Optional)*
 
 Please provide your name and phone number so emergency responders can contact you if needed:
@@ -229,7 +235,7 @@ Please provide your name and phone number so emergency responders can contact yo
 Example: "John Smith, +1234567890"
 
 Or type "skip" to submit the report anonymously."""
-    
+
     elif session.step == "contact_info":
         if message_lower != "skip":
             # Try to parse name and phone from message
@@ -240,11 +246,11 @@ Or type "skip" to submit the report anonymously."""
             else:
                 session.data["reporter_name"] = message_body.strip()
                 session.data["reporter_phone"] = phone_number
-        
+
         # Create the fire alert
         try:
             alert_created = create_fire_alert_from_whatsapp(session.data, phone_number)
-            
+
             if alert_created:
                 session.reset()
                 return """✅ *Fire Report Submitted Successfully!*
@@ -259,7 +265,7 @@ Or type "skip" to submit the report anonymously."""
 Thank you for using our fire reporting system. Stay safe!
 
 Type "start" to report another emergency.""".replace("{alert_id}", str(alert_created))
-            
+
             else:
                 session.reset()
                 return """❌ *Error Submitting Report*
@@ -269,7 +275,7 @@ There was a technical issue submitting your fire report.
 **PLEASE CALL 911 IMMEDIATELY** if this is an active emergency.
 
 You can try reporting again by typing "start"."""
-        
+
         except Exception as e:
             logger.error(f"Error creating WhatsApp fire alert: {e}")
             session.reset()
@@ -280,7 +286,7 @@ Unable to process your report due to a system error.
 **CALL 911 IMMEDIATELY** for emergency assistance.
 
 Technical support has been notified."""
-    
+
     # Handle unknown messages
     return """I didn't understand that message. 
 
@@ -295,12 +301,12 @@ def create_fire_alert_from_whatsapp(session_data, reporter_phone):
     try:
         with app.app_context():
             location_info = session_data.get("location", {})
-            
+
             # Handle location data
             latitude = None
             longitude = None
             address = None
-            
+
             if location_info.get("type") == "coordinates":
                 latitude = location_info["latitude"]
                 longitude = location_info["longitude"]
@@ -312,7 +318,7 @@ def create_fire_alert_from_whatsapp(session_data, reporter_phone):
                 coords = geocode_address(address)
                 if coords and len(coords) == 2:
                     latitude, longitude = coords
-            
+
             # Create alert
             alert = Alert(
                 title="WhatsApp Fire Report",
@@ -327,18 +333,18 @@ def create_fire_alert_from_whatsapp(session_data, reporter_phone):
                 reporter_phone=session_data.get("reporter_phone", reporter_phone),
                 reporter_email=None
             )
-            
+
             db.session.add(alert)
             db.session.commit()
-            
+
             # Send notifications to emergency responders
             notification_thread = threading.Thread(target=send_alert_notifications, args=(alert.id,))
             notification_thread.daemon = True
             notification_thread.start()
-            
+
             logger.info(f"Fire alert created from WhatsApp: {alert.id}")
             return alert.id
-            
+
     except Exception as e:
         logger.error(f"Error creating fire alert from WhatsApp: {e}")
         return None
@@ -350,27 +356,27 @@ def whatsapp_webhook():
         # Get message data from Twilio
         from_number = request.form.get('From', '')
         message_body = request.form.get('Body', '').strip()
-        
+
         logger.info(f"Received WhatsApp message from {from_number}: {message_body}")
-        
+
         # Process the message
         response_text = process_whatsapp_message(from_number, message_body)
-        
+
         # Create Twilio response
         response = MessagingResponse()
         response.message(response_text)
-        
+
         logger.info(f"Sent WhatsApp response to {from_number}")
-        
+
         return str(response), 200, {'Content-Type': 'text/xml'}
-        
+
     except Exception as e:
         logger.error(f"Error processing WhatsApp webhook: {e}")
-        
+
         # Send error response
         response = MessagingResponse()
         response.message("Sorry, there was an error processing your message. For emergencies, please call 911.")
-        
+
         return str(response), 200, {'Content-Type': 'text/xml'}
 
 @app.route('/api/whatsapp/send-alert', methods=['POST'])
@@ -380,17 +386,17 @@ def send_whatsapp_alert():
         data = request.get_json()
         to_number = data.get('to_number')
         message = data.get('message')
-        
+
         if not to_number or not message:
             return jsonify({'error': 'Missing to_number or message'}), 400
-        
+
         success = send_whatsapp_message(to_number, message)
-        
+
         if success:
             return jsonify({'success': True, 'message': 'WhatsApp alert sent'})
         else:
             return jsonify({'error': 'Failed to send WhatsApp message'}), 500
-            
+
     except Exception as e:
         logger.error(f"Error sending WhatsApp alert: {e}")
         return jsonify({'error': 'Failed to send WhatsApp alert'}), 500
@@ -401,7 +407,7 @@ def test_whatsapp_bot():
     try:
         data = request.get_json()
         test_number = data.get('phone_number', '+1234567890')
-        
+
         # Send test message
         test_message = """🔥 Fire Emergency System Test
 
@@ -410,9 +416,9 @@ This is a test of the WhatsApp fire reporting system.
 Type "start" to begin fire emergency reporting.
 
 For real emergencies, always call 911 first!"""
-        
+
         success = send_whatsapp_message(test_number, test_message)
-        
+
         if success:
             return jsonify({
                 'success': True, 
@@ -421,7 +427,7 @@ For real emergencies, always call 911 first!"""
             })
         else:
             return jsonify({'error': 'Failed to send test message'}), 500
-            
+
     except Exception as e:
         logger.error(f"Error testing WhatsApp bot: {e}")
         return jsonify({'error': 'WhatsApp test failed'}), 500

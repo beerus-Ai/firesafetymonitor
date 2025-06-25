@@ -5,6 +5,7 @@ from models import Sensor, Alert, SensorReading, EmergencyContact, AlertStatus, 
 from sensor_reader import test_sensor_reading, sensor_reader
 from notifier import send_alert_notifications, send_test_notifications
 from gps_navigator import get_navigation_to_alert, geocode_address, reverse_geocode, find_fire_stations
+from admin_auth import login_required
 import logging
 
 logger = logging.getLogger(__name__)
@@ -32,6 +33,7 @@ def index():
                          active_alerts_count=active_alerts_count)
 
 @app.route('/dashboard')
+@login_required
 def dashboard():
     """Detailed dashboard with charts and analytics"""
     # Get alerts for the last 30 days
@@ -50,6 +52,7 @@ def dashboard():
                          contacts=contacts)
 
 @app.route('/alerts')
+@login_required
 def alerts():
     """Show all alerts with filtering options"""
     status_filter = request.args.get('status', 'all')
@@ -127,6 +130,7 @@ def api_report_fire():
         return jsonify({'error': 'Failed to submit fire report'}), 500
 
 @app.route('/api/alerts/<int:alert_id>/resolve', methods=['POST'])
+@login_required
 def resolve_alert(alert_id):
     """Resolve an alert"""
     try:
@@ -227,6 +231,7 @@ def get_alerts():
     return jsonify(alert_data)
 
 @app.route('/api/test-sensor/<int:sensor_id>')
+@login_required
 def test_sensor(sensor_id):
     """Test a sensor with a simulated reading"""
     try:
@@ -245,6 +250,7 @@ def test_sensor(sensor_id):
         return jsonify({'error': 'Failed to test sensor'}), 500
 
 @app.route('/api/test-notifications')
+@login_required
 def test_notifications():
     """Test the notification system"""
     try:
